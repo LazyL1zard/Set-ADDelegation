@@ -116,14 +116,9 @@ function Set-ADDelegation {
                   $AllAces.Add($ACE)
   
                   $UserWriteProperties = @("company","department","description",
-                                "displayName","givenName",
-                                "homeDrive","homeDirectory","homePhone",
-                                "initials","title",
-                                "userPrincipalName","sAMAccountName","manager","cn","name",
-                                "pwdLastSet",
-                                "streetAddress",
-                                "postalCode","sn",
-                                "userAccountControl")
+                                "displayName","givenName","homeDrive","homeDirectory","homePhone",
+                                "initials","title","userPrincipalName","sAMAccountName","manager","cn","name",
+                                "pwdLastSet","streetAddress","postalCode","sn","userAccountControl")
   
                   foreach ($UserWriteProperty in $UserWriteProperties){
                       $Ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,"WriteProperty","Allow",$GUIDMap["$UserWriteProperty"],"Descendents",$GUIDMap["user"]
@@ -182,7 +177,10 @@ function Set-ADDelegation {
           }
   
           try {
-              set-acl -aclobject $ACL -Path $OUPath
+                if ($PSCmdlet.ShouldProcess("$($OUPath)", "Set-Acl")) {
+                    Set-Acl -AclObject $ACL -Path $OUPath
+                }
+              
           }
           catch {
               Write-Host $Error[0] -ForegroundColor Red

@@ -97,18 +97,27 @@ function Set-ADDelegation {
             $Check = 1
             return
         }
+
+
+        Write-Verbose "Retriving ACLs from Organisation Unit : $($OU.DistinguishedName)"
+        try {
+            $ACL = get-acl $OU
+        }
+        catch {
+            Write-Verbose "Unable to retrive ACLs from OU: $($OU.DistinguishedName) "
+            $Check = 1
+            return
+        }
         
 
         Write-Verbose "Creating ACE Collection"
         $AllAces = New-Object System.Collections.Generic.List[System.Object]
-
-
-        Write-Verbose "Retriving ACL from Organisation Unit : $($OU.DistinguishedName)"
-        $ACL = get-acl $OU
-
     }
+
+
     Process
-    {      
+    {
+        Write-Verbose 'Checking prerequisits'
         if ($Check -eq 1) {
             return
         }
@@ -130,7 +139,30 @@ function Set-ADDelegation {
 
 
         switch ($ObjectClass) {
+
+
             'User' {
+
+                $UserMainProperties = @('CreateChild','DeleteChild')
+
+                foreach ($UserMainProperty in $UserMainProperties) {
+
+                    $ACE = new-object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,$UserMainProperty,"Allow",$GUIDMap["user"]
+                    $AllAces.Add($ACE)
+                }
+
+                $UserWriteProperties = @("company","department","description",
+                            "displayName","givenName","homeDrive","homeDirectory","homePhone",
+                            "initials","title","userPrincipalName","sAMAccountName","manager","cn","name",
+                            "pwdLastSet","streetAddress","postalCode","sn","userAccountControl")
+                            
+
+                foreach ($UserWriteProperty in $UserWriteProperties){
+                    $Ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,"WriteProperty","Allow",$GUIDMap["$($UserWriteProperty)"],"Descendents",$GUIDMap["user"]
+                    $AllAces.Add($Ace)
+                }
+
+
                 $ACE = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,"ReadProperty","Allow","Descendents",$GUIDMap["user"]
                 $AllAces.Add($ACE)
 
@@ -140,65 +172,61 @@ function Set-ADDelegation {
                 $ACE = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,"ExtendedRight","Allow",$extendedrightsmap["Reset Password"],"Descendents",$GUIDMap["user"]
                 $AllAces.Add($ACE)
 
-                $ACE = new-object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,"CreateChild","Allow",$GUIDMap["user"]
-                $AllAces.Add($ACE)
-
-                $ACE = new-object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,"DeleteChild","Allow",$GUIDMap["user"]
-                $AllAces.Add($ACE)
-
-                $UserWriteProperties = @("company","department","description",
-                            "displayName","givenName","homeDrive","homeDirectory","homePhone",
-                            "initials","title","userPrincipalName","sAMAccountName","manager","cn","name",
-                            "pwdLastSet","streetAddress","postalCode","sn","userAccountControl")
-
-                foreach ($UserWriteProperty in $UserWriteProperties){
-                    $Ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,"WriteProperty","Allow",$GUIDMap["$UserWriteProperty"],"Descendents",$GUIDMap["user"]
-                    $AllAces.Add($Ace)
-                }
             }
             'Computer'{
+
                 $ServerMainProperties = @("CreateChild","DeleteChild")
-                
         
                 foreach ($ServerMainProperty in $ServerMainProperties){
+
                     $Ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,$ServerMainProperty,"Allow",$GUIDMap["computer"]
                     $AllAces.Add($Ace)
                 }
 
 
-
-                $Ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,"ReadProperty","Allow","Descendents",$GUIDMap["computer"]
-                $AllAces.Add($Ace)
-
-                $Ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,"WriteProperty","Allow","Descendents",$GUIDMap["computer"]
-                $AllAces.Add($Ace)
-
                 $ServerExtendedProperties = @("Reset Password","Account Restrictions",
                                         "Validated write to DNS host name",
                                         "Validated write to service principal name")
         
-                foreach ($ServerExtendedProperty in $ServerExtendedProperties){                                                                                            
+                foreach ($ServerExtendedProperty in $ServerExtendedProperties){    
+
                     $Ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,"ExtendedRight","Allow",$extendedrightsmap["$ServerExtendedProperty"],"Descendents",$GUIDMap["computer"]
                     $AllAces.Add($Ace)
                 }
+
+
+                $Ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,"ReadProperty","Allow","Descendents",$GUIDMap["computer"]
+                $AllAces.Add($Ace)
+
+
+                $Ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,"WriteProperty","Allow","Descendents",$GUIDMap["computer"]
+                $AllAces.Add($Ace)
+
+                
             }
             'Group'{
+
                 $GroupMainProperties = @("CreateChild","DeleteChild")
+
                 foreach ($GroupMainProperty in $GroupMainProperties){
+
                         $Ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,$GroupMainProperty,"Allow",$GUIDMap["group"]
                         $AllAces.Add($Ace)
                 }
 
-                $Ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,"ReadProperty","Allow","Descendents",$GUIDMap["group"]
-                $AllAces.Add($Ace)
 
                 $GroupWriteProperties = @("description","sAMAccountName","groupType",
                                         "member","cn","name","info")
 
                 foreach ($GroupWriteProperty in $GroupWriteProperties){
+
                         $Ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,"WriteProperty","Allow",$GUIDMap["$GroupWriteProperty"],"Descendents",$GUIDMap["group"]
                         $AllAces.Add($Ace)
                 }
+
+
+                $Ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $ADGroupSID,"ReadProperty","Allow","Descendents",$GUIDMap["group"]
+                $AllAces.Add($Ace)
             }
         }
 
@@ -214,7 +242,7 @@ function Set-ADDelegation {
             
         }
         catch {
-            Write-Host $Error[0] -ForegroundColor Red
+            $Error[0]
         }
     }
     End

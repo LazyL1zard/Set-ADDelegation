@@ -1,25 +1,27 @@
 function Set-ADDelegation {
     <#
     .Synopsis
-    Short description
+    Set ACL on Active Directory Organizational Unit delegation
     .DESCRIPTION
-    Long description
+    Sets the basic ACL to delegate Active Directory rights on User, computer and group objects.
+    .SYNTAX
+    Set-ADDelegation [[-ObjectClass] <switch[]>] [-ADGroup <string>] [-OUPath <string>]
     .EXAMPLE
-    Example of how to use this cmdlet
+    Set-ADDelegation -ObjectClass User -ADGroup DS_DEMO_OU_T2_USR -OUPath 'OU=Redirected Users,DC=infra,DC=demo'
     .EXAMPLE
-    Another example of how to use this cmdlet
-    .INPUTS
-    Inputs to this cmdlet (if any)
-    .OUTPUTS
-    Output from this cmdlet (if any)
-    .NOTES
-    General notes
-    .COMPONENT
-    The component this cmdlet belongs to
-    .ROLE
-    The role this cmdlet belongs to
-    .FUNCTIONALITY
-    The functionality that best describes this cmdlet
+    Set-ADDelegation -ObjectClass Computer -ADGroup DS_DEMO_OU_T2_COMP -OUPath 'OU=Redirected Computers,DC=infra,DC=demo'
+    .PARAMETER
+    ObjectClass 
+    switch parameter
+    Defines which Active Directory objectclass you want to delegate
+    .PARAMETER
+    ADGroup
+    string
+    The Active Directory group name you want the delegation to be applied
+    .PARAMETER
+    OUPath
+    string
+    The Organizational Unit DistinguidhedName you want the ACL to be applied to.
     #>
     [CmdletBinding(SupportsShouldProcess)]
     Param

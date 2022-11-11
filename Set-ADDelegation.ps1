@@ -5,14 +5,14 @@ function Set-ADDelegation {
     .DESCRIPTION
     Sets the basic ACL to delegate Active Directory rights on User, computer and group objects.
     .SYNTAX
-    Set-ADDelegation [[-ObjectClass] <switch[]>] [-ADGroup <string>] [-OUPath <string>]
+    Set-ADDelegation [[-ObjectClass] <ValidateSet[]>] [-ADGroup <string>] [-OUPath <string>]
     .EXAMPLE
     Set-ADDelegation -ObjectClass User -ADGroup DS_DEMO_OU_T2_USR -OUPath 'OU=Redirected Users,DC=infra,DC=demo'
     .EXAMPLE
     Set-ADDelegation -ObjectClass Computer -ADGroup DS_DEMO_OU_T2_COMP -OUPath 'OU=Redirected Computers,DC=infra,DC=demo'
     .PARAMETER
     ObjectClass 
-    switch parameter
+    ValidateSet parameter
     Defines which Active Directory objectclass you want to delegate
     .PARAMETER
     ADGroup
